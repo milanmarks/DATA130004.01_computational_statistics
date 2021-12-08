@@ -1,0 +1,218 @@
+---
+title: "statComp_hw4"
+author: "凌浩东"
+date: "10/28/2021"
+documentclass: ctexart
+output: rticles::ctex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+For $x \in [a_{i-1},a_i]$, $i \in {1,\cdots,j}$,
+$$
+\begin{aligned}
+P(X^*\leq x|J = i)& = \int_{-\infty}^{x} f_i(x)dx\\
+&= k\int_{-a_{i-1}}^{x} f(x)dx\\
+& = k(F(x) - \frac{i-1}{k})\\
+& = kF(x) - i +1
+\end{aligned}
+$$
+Hence,
+$$
+\begin{aligned}
+P(X^*\leq x|J = i) = \left\{
+\begin{array}{lcl}
+kF(x) - i +1& & x \in [a_{i-1},a_i]\\
+0 & & x \in (-\infty, a_{i-1})\\
+1 & & x \in (a_i, \infty)
+\end{array}
+\right.
+\end{aligned}
+$$
+Hence,
+$$
+\begin{aligned}
+P(X^* \leq x) &=  \sum_{j = 1}^n P(X^*\leq x|J = j)P(J=j) \\
+&= \frac{1}{k} \sum_{j = 1}^nP(X^*\leq x|J = j)\\
+&= \frac{1}{k} \left(\sum_{j = 1}^{i-1}1 + P(X^*\leq x|J = i) + \sum_{j = i+1}^{n}0\right) \\
+& = \frac{1}{k} \left(i-1 + [kF(x) - i +1]\right)\\
+& = F(x)
+\end{aligned}
+$$
+Hence, $X^* \sim X$.
+
+For $Y^*$,
+$$
+Y^* = \frac{g_j(X^*)}{f_j(X^*)} = \frac{g_j(X^*)}{kf(X^*)} \sim \frac{g(X)}{kf(X)} = \frac{Y}{k}
+$$
+with $X^*\sim X$.
+
+
+## 2
+
+### exercise 6.1
+```{r}
+n <- 20
+m <- 1000
+mse <- numeric(9)
+for (k in 1:9) {
+  tmean <- numeric(m)
+  for (i in 1:m) {
+    x <- sort((rcauchy(n)))
+    tmean[i] <- sum(x[(k+1):(n-k)])/(n-2*k)
+  }
+  target <- median(tmean)
+  mse[k] <- mean((tmean - target)^2)
+}
+k <- c(1:9)
+rbind(k, mse)
+```
+### exercise 6.9
+```{r}
+
+n <- 20
+m <- 1000
+gini.ratio <- numeric(m)
+for (j in 1:m) {
+  x <- sort(rlnorm(n))
+  mu <- mean(x)
+  G <- 0
+  for (i in 1:n) {
+    G <- G + (2*i - n - 1) * x[i]
+  }
+  gini.ratio[j] <- G / (n^2 * mu)  
+}
+mean <- mean(gini.ratio)
+median <- median(gini.ratio)
+c(mean, median)
+quantile(gini.ratio, probs = seq(.1, .9, by = .1))
+hist(gini.ratio, probability = T, 
+     main = 'Histogram of Gini ratio generated 
+     from log normal distribution', 
+     xlab = 'Gini ratio')
+
+```
+```{r}
+
+n <- 20
+m <- 1000
+gini.ratio <- numeric(m)
+for (j in 1:m) {
+  x <- sort(runif(n))
+  mu <- mean(x)
+  G <- 0
+  for (i in 1:n) {
+    G <- G + (2*i - n - 1) * x[i]
+  }
+  gini.ratio[j] <- G / (n^2 * mu)  
+}
+mean <- mean(gini.ratio)
+median <- median(gini.ratio)
+c(mean, median)
+quantile(gini.ratio, probs = seq(.1, .9, by = .1))
+hist(gini.ratio, probability = T, 
+     main = 'Histogram of Gini ratio generated 
+     from uniform distribution', 
+     xlab = 'Gini ratio')
+```
+```{r}
+
+n <- 100
+m <- 1000
+gini.ratio <- numeric(m)
+for (j in 1:m) {
+  x <- sort(rbinom(n, size = 1, prob = .1))
+  mu <- mean(x)
+  G <- 0
+  for (i in 1:n) {
+    G <- G + (2*i - n - 1) * x[i]
+  }
+  gini.ratio[j] <- G / (n^2 * mu)  
+}
+mean <- mean(gini.ratio)
+median <- median(gini.ratio)
+c(mean, median)
+quantile(gini.ratio, probs = seq(.1, .9, by = .1))
+hist(gini.ratio, probability = T, 
+     main = 'Histogram of Gini ratio generated 
+     from Bernoulli distribution', 
+     xlab = 'Gini ratio')
+```
+
+## 3
+As $X\sim N(0,1)$,
+denote the pdf and cdf of standard normal as $f(x)$ and $F(x)$ respectively,
+then
+
+$$
+\begin{aligned}
+f_{X_{(i)}}(x) = \frac{n!}{(i-1)!(n-i)!}F^{i-1}(x)(1-F(x))^{n-i}f(x)\\
+f_{X_{(n-i+1)}}(x) = \frac{n!}{(i-1)!(n-i)!}F^{n-i}(x)(1-F(x))^{i-1}f(x)\\
+\end{aligned}
+$$
+Known $F(-x) = 1 - F(x)$,
+$f(x) = f(-x)$,
+we know that 
+$$
+\begin{aligned}
+E\left[X_{(i)}+X_{(n-i+1)}\right]  =& \int_{-\infty}^{\infty} \frac{n!}{(i-1)!(n-i)!}F^{i-1}(x)(1-F(x))^{n-i}f(x)dx +\\ &\int_{-\infty}^{\infty}\frac{n!}{(i-1)!(n-i)!}F^{n-i}(x)(1-F(x))^{i-1}f(x)dx\\
+= & \frac{n!}{(i-1)!(n-i)!}\left(\int_{-\infty}^{\infty} F^{i-1}(x)(1-F(x))^{n-i}f(x)dx +\right.\\ &\left.\int_{-\infty}^{\infty}F^{n-i}(-x)(1-F(-x))^{i-1}f(-x)dx\right)\\
+= & \frac{n!}{(i-1)!(n-i)!}\left(\int_{-\infty}^{\infty} F^{i-1}(x)(1-F(x))^{n-i}f(x)dx +\right.\\ &\left.\int_{-\infty}^{\infty}(1-F(x))^{n-i}F^{i-1}(x)f(x)dx\right)\\
+= & 0
+\end{aligned}
+$$
+Hence,
+$$
+\begin{aligned}
+E\left[\bar{X}_{[-k]}\right] & = E\left[\frac{1}{n-2k}\sum_{i=k+1}^{n-k}X_{(i)}\right]\\
+& = \frac{1}{n-2k}\sum_{i=k+1}^{n-k}E\left[X_{(i)}\right]\\
+& = \frac{1}{2(n-2k)}\sum_{i=k+1}^{n-k}E\left[X_{(i)}+X_{(n-i+1)}\right]\\
+& = 0
+\end{aligned}
+$$
+
+## 4
+
+Denote $\frac{X_i-\mu}{\sigma}$ as $Z_i$,
+$Y = AZ$, where $A$ is an  orthogonal matrix,
+and the first row of $A$ is $(\frac{1}{\sqrt{n}}, \cdots, \frac{1}{\sqrt{n}})$,
+then $Y \sim N(0, I)$,
+$$
+\lVert Y\rVert^2 = \sum_iY_i^2 \sim \chi^2(n)
+$$
+and
+$$
+Y_1 = \frac{\sum_i(X_i-\mu)}{\sqrt{n}\sigma} = \frac{\sqrt{n}(\bar{X} - \mu)}{\sigma} \sim N(0,1)
+$$
+where $Y_1$ is the first value of vector $Y$. 
+
+Hence
+$$
+\begin{aligned}
+\frac{\sum_i(X_i-\bar{X})^2}{\sigma^2} &= \frac{\sum_i(X_i-\mu)^2}{\sigma^2} - \frac{n(\bar{X} - \mu)^2}{\sigma^2}\\
+& = \lVert Z\rVert^2 - Y_1^2\\
+& = \lVert Y\rVert^2 - Y_1^2\\
+& \sim \chi^2(n-1)
+\end{aligned}
+$$
+
+and $\frac{\sum_i(X_i-\bar{X})^2}{\sigma^2}$ is independent with $Y_1 = \frac{\sqrt{n}(\bar{X} - \mu)}{\sigma}$,
+i.e., $\frac{\sum_i(X_i-\bar{X})^2}{\sigma^2}$ is independent with $\bar{X}$
+
+
+
+
+
+
+
+
+
+
+
+
+
+

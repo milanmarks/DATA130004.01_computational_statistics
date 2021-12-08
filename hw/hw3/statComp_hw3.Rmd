@@ -1,0 +1,171 @@
+---
+title: "statComp_hw3"
+author: "凌浩东"
+date: "10/21/2021"
+output: 
+  html_document:
+    toc: true # table of content true
+    toc_depth: 3  # upto three depths of headings (specified by #, ## and ###)
+    theme: united  # many options for theme, this one is my favorite.
+    highlight: tango  # specifies the syntax highlighting style
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Exercises 5.12, and 5.14.
+
+### 5.12
+
+Suppose $l \leq \frac{g(x)}{f(x)} \leq u$,
+then
+
+$$
+\begin{align*}
+Var(\hat{\theta}_{IS}) &= Var\left(\frac{1}{m}\sum_{i=1}^{m}\frac{g(x_i)}{f(x_i)}\right)\\
+&= \frac{1}{m^2}\sum_{i=1}^{m}Var\left(\frac{g(x_i)}{f(x_i)}\right)\\
+&= \frac{1}{m^2}\sum_{i=1}^{m}\left(\int\frac{g^2(x_i)}{f(x_i)}dx_i - \theta^2\right)
+\end{align*}
+$$
+
+where
+
+$$
+l\theta = l\int g(x_i)dx_i \leq \int\frac{g^2(x_i)}{f(x_i)}dx_i \leq u\int g(x_i)dx_i = u\theta  
+$$
+
+thus
+
+$$
+\frac{1}{m}(l\theta - \theta^2) \leq Var(\hat{\theta}_{IS}) \leq \frac{1}{m}(u\theta - \theta^2)
+$$
+i.e.,  $Var(\hat{\theta}_{IS})$ is bounded.
+
+### 5.14
+First, let's take a look at our target function
+$$
+\begin{align*}
+&g(x) = \frac{x^2}{\sqrt{2\pi}}e^{-\frac{x^2}{2}} & x>1
+\end{align*}
+$$
+
+```{r, include=FALSE}
+library(ggplot2)
+library(ggpmisc)
+```
+
+```{r}
+g <- function(x) {
+  x^2 * exp(-x^2 / 2) / sqrt(2*pi) * (x > 1) 
+}
+
+x <- seq(1, 10, length = 10000)
+y <- g(x)
+df <- data.frame(x, y)
+c(x[ggpmisc:::find_peaks(df$y)], y[ggpmisc:::find_peaks(df$y)])
+```
+
+```{r}
+ggplot(df, aes(x = x, y = y)) + geom_line() + stat_peaks(col = 'red') +
+  scale_x_continuous(breaks=seq(0, 10, 1))
+```
+
+We can see that after a sharp ascend until 1.4 and descend to nearly 0 at around 4.
+Hence we use two target function,
+one is a shifted norm density function,
+the other is a cauchy density function.
+
+```{r}
+set.seed(42)
+m <- 10000
+
+theta.hat <- se <- numeric(2)
+
+x <- rnorm(m, mean = 1.4) 
+fg <- g(x) / (dnorm(x, mean = 1.4))
+theta.hat[1] <- mean(fg)
+se[1] <- sd(fg)
+
+x <- rcauchy(m, location = 1.4, scale = 1)
+fg <- g(x) / dcauchy(x, location = 1.4, scale = 1)
+theta.hat[2] <- mean(fg)
+se[2] <- sd(fg)
+
+theta.hat
+se
+```
+
+## 2
+
+> Given two random variables X and Y , prove the law of total variance
+
+$$
+var(Y) = E\{var(Y|X)\} + var\{E(Y|X)\}
+$$
+
+> Be explicit at every step of your proof.
+
+$$
+\begin{align*}
+E\{var(Y|X)\} &= E\{E(Y^2|X) - [E(Y|X)]^2\}
+= E(Y^2) - E\{[E(Y|X)]^2\} \\
+var\{E(Y|X)\} &= E\{[E(Y|X)]^2\} - \{E[E(Y|X)]\}^2 = E\{[E(Y|X)]^2\} - [E(Y)]^2\\
+\end{align*}
+$$
+Hence,
+$$
+E\{var(Y|X)\} + var\{E(Y|X)\} = E(Y^2) - [E(Y)]^2 = var(Y)
+$$
+
+## 3
+
+> Define $\theta = \int_Ag(x)dx$, 
+where A is a bounded set and $g \in \mathcal{L}_2(A)$. 
+Let f be an importance function which is a density function supported on the set A.
+
+> (a) Describe the steps to obtain the importance sampling estimator $\hat{\theta}_n$, 
+where n is the number of random samples generated during the process.
+
+* generate n random variables from f.
+
+* caculate the mean of $\frac{g(x)}{f(x)}$, assign it to $\hat{\theta}_n$.
+
+> (b) Show that the Monte Carlo variance of $\hat{\theta}_n$ is
+$var(\hat{\theta}_n) = \frac{1}{n}\left\{\int_A\frac{g^2(x)}{f(x)}dx-\theta^2\right\}$.
+
+$$
+\begin{align*}
+var(\hat{\theta}_n) &= var\left(\frac{1}{n}\sum_{i=1}^{n}\frac{g(x_i)}{f(x_i)}\right) \\
+&= \frac{1}{n^2} \sum_{i = 1}^{n} var\left(\frac{g(x_i)}{f(x_i)}\right) \\
+&= \frac{1}{n^2} \sum_{i = 1}^{n}\left(E\left[\left(\frac{g(x_i)}{f(x_i)}\right)^2\right] - \left(E\left[\frac{g(x_i)}{f(x_i)}\right]\right)^2\right) \\ 
+& = \frac{1}{n^2} \sum_{i = 1}^{n} \left(\int_A\frac{g^2(x_i)}{f^2(x_i)}f(x_i)dx_i - \int_A\frac{g(x_i)}{f(x_i)}f(x_i)dx_i\right)\\
+& = \frac{1}{n} \left\{\int_A\frac{g^2(x)}{f(x)}dx-\theta^2\right\}
+\end{align*}
+$$
+
+> (c) Show that the optimal importance function $f^*$
+, i.e., the minimizer of $var(\hat{\theta}_n)$, is
+$f*(x) = \frac{|g(x)|}{\int_A|g(x)|dx}$,
+and derive the theoretical lower bound of $var(\hat{\theta}_n)$.
+
+From Cauchy-Schwartz inequality, 
+we know that 
+$$
+\int_A\frac{g^2(x)}{f(x)}dx = \int_A\frac{g^2(x)}{f(x)}dx\cdot 1
+= \int_A\frac{g^2(x)}{f(x)}dx \int_Af(x)dx \geq \left(\int_Ag(x)dx\right)^2
+$$
+where the equality holds when $f(x) \propto |g(x)|$.
+
+Hence the minimizer is $f*(x) = \frac{|g(x)|}{\int_A|g(x)|dx}$.
+
+The theoretical lower bound is $\frac{1}{n} \left\{\left(\int_Ag(x)dx\right)^2-\theta^2\right\} = 0$.
+
+
+
+
+
+
+
+
+

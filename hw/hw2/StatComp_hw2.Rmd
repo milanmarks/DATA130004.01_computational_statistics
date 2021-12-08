@@ -1,0 +1,170 @@
+---
+title: "statComp_hw2"
+author: "凌浩东"
+date: "10/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1
+
+## 5.6
+
+$$
+\begin{align*}
+Cov(e^U, e^{1-U}) &=  
+E(e^Ue^{1-U}) - Ee^UEe^{1-U} = 
+e - (e - 1)^2
+= -0.2342106\\
+
+Var(e^U+e^{1-U}) & = Var(e^U) + Var(e^{1-U}) + 2Cov(e^U, e^{1-U}) \\
+&= 2Var(e^U) + 2Cov(e^U, e^{1-U}) \\ 
+&= 2(\frac{e^2 - 1}{2} - (e - 1)^2) + 2(e - (e - 1)^2)\\
+& = 0.01564999
+\end{align*}
+$$
+using Anthithetic variate, 
+$\hat{\theta} = \frac{1}{2}e^U + \frac{1}{2}e^{1-U}$.
+
+Hence
+$$
+\begin{align*}
+Var(\hat{\theta}) = \frac{1}{4}Var(e^U + e^{1-U}) = 0.0039113
+\end{align*}
+$$
+while $Var(e^U) = \frac{e^2 - 1}{2} - (e - 1)^2 = 0.2420351$.
+
+Hence, the percent of reduction is 
+$$
+\frac{0.2420351 - 0.0039125}{0.2420351} \times 100\% = 98.4\%
+$$
+
+## 5.6
+
+
+```{r}
+set.seed(42)
+
+m <- 10000
+u <- runif(m)
+T1 <- exp(u)
+T2 <- exp(u) / 2 + exp(1-u) / 2
+
+c(mean(T1), mean(T2))
+(var(T1) - var(T2)) / var(T1)
+```
+The result is consistent with the theoretical value 
+computed in 5.6.
+
+## 5.8
+
+$$
+\begin{align*}
+Cov(U, 1-U) &= E[U(1-U)] - EUE(1-U) = \frac{1}{6} - \frac{1}{2}\times \frac{1}{2} = -\frac{1}{12}\\
+\rho (aU, a(1-U)) &= \frac{Cov(aU, a(1-U))}{\sqrt{Var(aU)Var(a(1-U))}} \\
+&= \frac{a^2 Cov(U, 1-U)}{\sqrt{a^2Var(U)\times a^2Var(1-U)}} = \frac{Cov(U, 1-U)}{Var(U)} = -1
+\end{align*}
+$$
+Suppose $U \sim Beta(\alpha, \alpha)$,
+thus
+$$
+\begin{align*}
+EU &= \frac{\alpha}{2\alpha} = \frac{1}{2}\\
+EU^2 &= \frac{\alpha + 1}{2\alpha + 1}EU = \frac{\alpha + 1}{2(2\alpha + 1)}\\
+Var(U) &= \frac{\alpha^2}{(\alpha+\alpha)^2(\alpha+\alpha+1)} = \frac{1}{4(2\alpha+1)}\\
+Cov(U, 1-U) &= E[U(1-U)] - EUE(1-U) = \frac{1}{2} - \frac{\alpha + 1}{2(2\alpha + 1)} - \left(\frac{1}{2}\right)^2 \\
+& = \frac{1}{4} - \frac{\alpha + 1}{2(2\alpha + 1)}\\
+& = -\frac{1}{4(2\alpha+1)}\\
+\rho (aU, a(1-U))&= \frac{a^2 Cov(U, 1-U)}{\sqrt{a^2Var(U)\times a^2Var(1-U)}} = \frac{Cov(U, 1-U)}{Var(U)} = -1
+\end{align*}
+$$
+
+## 5.10
+
+```{r}
+set.seed(42)
+
+MC.Myfun <- function(R = 10000, antithetic = T) {
+  u <- runif(R/2)
+  if (!antithetic) v <- runif(R/2) else
+    v <- 1-u
+  u <- c(u, v)
+  g <- exp(-u) / (1+u^2)
+  mean(g)
+}
+
+m <- 1000
+T1 <- T2 <- numeric(m)
+for (i in 1:m) {
+  T1[i] <- MC.Myfun(antithetic = F)
+  T2[i] <- MC.Myfun()
+} 
+
+c(mean(T1), mean(T2))
+c(var(T1), var(T2))
+print((var(T1) - var(T2)) / var(T1))
+```
+
+The estimator is 0.5248056 using Monte Carlo integration with antithetic variables.
+The approximate reduction in variance is 96.30%.
+
+# 2
+
+> Monte Carlo method can be used to approximate the fraction of a d-dimensional
+hypersphere which lies in the inscribed d-dimensional hypercube. Simulate with
+different dimensions $d = 2, 3, 4, \cdots , 10$. (Hint: use `apply` function.)\\
+(1) Derive the formula for the EXACT values for the above problem for each d-dimension.\\
+(2) Using the above formula, approximate the value of $\pi$. Find the number of points
+needed to approximate $\pi$ to its 4-th digit for each dimension d. Set the random
+seed with `set.seed(123)` at the beginning of your R code.
+
+
+```{r}
+MC.ballVolumn <- function(d, m) {
+  # generate matrix of uniform random variables
+  # each column represent a point in the hyper space
+  data <- matrix(runif(d*m), d, m)
+  
+  # for each point, check if the distance to the origin
+  # if the distance smaller than 1 
+  # the point is in the hypersphere
+  p <- apply(data, 2, function(x) sum(x^2)<=1)
+  
+  # calculate how many points are in the hypersphere
+  fraction <- apply(matrix(p, 1), 1, function(x) {sum(x)/m} )
+  
+  fraction
+}
+
+m <- 10000
+fraction <- numeric(9)
+for (d in c(2:10)) {
+  fraction[d - 1] <- MC.ballVolumn(d, m)
+}
+fraction
+```
+```{r}
+set.seed(123)
+
+
+d <- 10
+m <- 10000
+result <- matrix(NA, d, m)
+result <- outer(2:nrow(result), 1:ncol(result), 
+                FUN = function(r,c) (2^r * gamma(r/2+1) * MC.ballVolumn(r, c))^(2/c))
+result <- apply(result, 1, function(x) length(x[x - pi < 1e-4]))
+result
+
+```
+
+
+
+
+
+
+
+
+
