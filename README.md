@@ -1,8 +1,8 @@
-# DATA130004.01_computational_statistics
-This is the backup for materials in DATA130004.01 Computational Statistics in fall 2021, Fudan University taught by Nan Zhang.
-Textbook is statistical computing with r by Maria L. Rizzo.
+# DATA130004.01 Computational Statistics
+This repository contains homework and a brief summary for DATA130004.01, Computational Statistics in fall 2021, Fudan University taught by Prof. Nan Zhang.
+Textbook is statistical computing with R by Maria L. Rizzo.
 
-You can find my summary in the repository, or you might prefer the [html version](https://milanmarks.github.io/files/2022-1-19-Summary-of-statComp.html).
+A html version of the summary can be found at [html version](https://milanmarks.github.io/files/2022-1-19-Summary-of-statComp.html).
 
 content include：
 -  generate random variables
